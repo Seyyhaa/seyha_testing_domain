@@ -41,7 +41,7 @@ ${emoji}
 📊 <b>ស្ថានភាព:</b> ${statusText}
 ⏰ <b>ពេលវេលា:</b> <i>${formattedTime}</i>
 📱 <b>ឧបករណ៍:</b> ${isMobile}
-🌐 <b>គេហទំព័រ:</b> Seyha Portfolio Lucky Wheel
+🌐 <b>គេហទំព័រ:</b> Sabay App
 ━━━━━━━━━━━━━━━━━━
 `;
 
