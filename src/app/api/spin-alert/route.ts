@@ -1,0 +1,101 @@
+import { NextRequest, NextResponse } from "next/server";
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const {
+      prize = "អរគុណ (Thanks You)",
+      isDoll = false,
+      dollNumber = null,
+      spinId = Math.random().toString(36).substring(2, 8).toUpperCase(),
+      clientTime,
+    } = body;
+
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+
+    // Format current time in Phnom Penh / Indochina time
+    const now = new Date();
+    const formattedTime =
+      clientTime ||
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Phnom Penh",
+        dateStyle: "medium",
+        timeStyle: "medium",
+      }).format(now);
+
+    const userAgent = req.headers.get("user-agent") || "Unknown Device";
+    const isMobile = /mobile/i.test(userAgent) ? "📱 Mobile" : "💻 Desktop";
+
+    // Build the Telegram notification message
+    const emoji = isDoll ? "🎉🧸 MEGA WINNER! 🧸🎉" : "🎰 ព័ត៌មានលទ្ធផលបង្វិលកង";
+    const statusText = isDoll
+      ? `🔥 <b>អបអរសាទរ! ឈ្នះតុក្កតា #${dollNumber}!</b> (ឱកាស 0.000001%)`
+      : `😂 <b>លទ្ធផល:</b> អរគុណ (Thanks You) (ឱកាស 99.9999%)`;
+
+    const message = `
+${emoji}
+━━━━━━━━━━━━━━━━━━
+🆔 <b>Spin ID:</b> <code>#SPIN-${spinId}</code>
+🎁 <b>រង្វាន់:</b> <b>${prize}</b>
+📊 <b>ស្ថានភាព:</b> ${statusText}
+⏰ <b>ពេលវេលា:</b> <i>${formattedTime}</i>
+📱 <b>ឧបករណ៍:</b> ${isMobile}
+🌐 <b>គេហទំព័រ:</b> Seyha Portfolio Lucky Wheel
+━━━━━━━━━━━━━━━━━━
+`;
+
+    // Check if Telegram environment variables are configured
+    if (!botToken || !chatId) {
+      console.warn(
+        "Telegram Bot Token or Chat ID not configured. Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in .env.local"
+      );
+      return NextResponse.json({
+        success: true,
+        delivered: false,
+        warning:
+          "Telegram Bot Token or Chat ID not configured in .env.local. Alert logged locally.",
+      });
+    }
+
+    // Send HTTP POST request to Telegram Bot API
+    const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+    const response = await fetch(telegramApiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: message.trim(),
+        parse_mode: "HTML",
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      console.error("Telegram API Error:", data);
+      return NextResponse.json(
+        {
+          success: false,
+          error: data.description || "Failed to send message to Telegram",
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      delivered: true,
+      messageId: data.result?.message_id,
+    });
+  } catch (error) {
+    console.error("Spin Alert API Handler Error:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Internal Server Error",
+      },
+      { status: 500 }
+    );
+  }
+}

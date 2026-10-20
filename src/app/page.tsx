@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import LuckyWheelModal from "@/components/LuckyWheelModal";
 
 export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -9,6 +10,7 @@ export default function Home() {
 
   const [isPlayingSong, setIsPlayingSong] = useState(false);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [isSpinModalOpen, setIsSpinModalOpen] = useState(false);
 
   const toggleSong = () => {
     if (!audioRef.current) return;
@@ -107,6 +109,32 @@ export default function Home() {
           />
         </div>
       </section>
+
+      {/* 4. LUCKY SPIN WHEEL SECTION */}
+      <section className="spin-section">
+        <div className="spin-card-preview">
+          <div className="spin-sparkle-badge">✨ សំណាងមហាសាល ✨</div>
+          <h3 className="spin-banner-title">កងបង្វិលយករង្វាន់</h3>
+          <p className="spin-banner-desc">
+            សាកល្បងសំណាងរបស់អ្នកឥឡូវនេះ ដើម្បីឈ្នះតុក្កតាដ៏ស្រស់ស្អាត! 🧸
+          </p>
+          <button
+            type="button"
+            className="btn-launch-spin"
+            onClick={() => setIsSpinModalOpen(true)}
+          >
+            <span className="spin-btn-wheel-emoji">🎡</span>
+            <span>ចុចទីនេះដើម្បីបង្វិលកង (Click To Spin)</span>
+          </button>
+        </div>
+      </section>
+
+      {/* POPUP SPIN MODAL */}
+      <LuckyWheelModal
+        isOpen={isSpinModalOpen}
+        onClose={() => setIsSpinModalOpen(false)}
+      />
     </div>
   );
 }
+
