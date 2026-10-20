@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
     // Build the Telegram notification message
     const emoji = isDoll ? "🎉🧸 MEGA WINNER! 🧸🎉" : "🎰 ព័ត៌មានលទ្ធផលបង្វិលកង";
     const statusText = isDoll
-      ? `🔥 <b>អបអរសាទរ! ឈ្នះតុក្កតា #${dollNumber}!</b> (ឱកាស 0.000001%)`
-      : `😂 <b>លទ្ធផល:</b> អរគុណ (Thanks You) (ឱកាស 99.9999%)`;
+      ? `🔥 <b>អបអរសាទរ! ឈ្នះតុក្កតា #${dollNumber}!</b>`
+      : `😂 <b>លទ្ធផល:</b> អរគុណ (Thanks You)`;
 
     const message = `
 ${emoji}
