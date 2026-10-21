@@ -2,68 +2,65 @@
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { X, Sparkles, Send, RotateCw, Volume2, VolumeX, Trophy } from "lucide-react";
+import { X, Sparkles, Send, RotateCw, Volume2, VolumeX, Trophy, ThumbsUp } from "lucide-react";
+
+export type PrizeType = "doll" | "sticker" | "candy" | "like_page" | "thanks";
 
 interface WheelSegment {
   id: number;
+  type: PrizeType;
   label: string;
   subLabel: string;
   icon: string;
   bgGradient: [string, string];
   textColor: string;
-  isDoll: boolean;
-  dollNumber?: number;
 }
 
 const SEGMENTS: WheelSegment[] = [
   {
     id: 0,
+    type: "thanks",
     label: "អរគុណ",
     subLabel: "Thanks You",
     icon: "🙏",
-    bgGradient: ["#854d0e", "#b45309"], // Golden amber
+    bgGradient: ["#78350f", "#b45309"], // Amber Bronze
     textColor: "#fef08a",
-    isDoll: false,
   },
   {
     id: 1,
+    type: "doll",
     label: "តុក្កតា",
-    subLabel: "Doll #1",
+    subLabel: "Jackpot 🧸",
     icon: "🧸",
-    bgGradient: ["#1e3a8a", "#2563eb"], // Royal blue
+    bgGradient: ["#831843", "#db2777"], // Ruby Magenta / Jackpot Gold
     textColor: "#ffffff",
-    isDoll: true,
-    dollNumber: 1,
   },
   {
     id: 2,
-    label: "តុក្កតា",
-    subLabel: "Doll #2",
-    icon: "🧸",
-    bgGradient: ["#064e3b", "#059669"], // Emerald
+    type: "sticker",
+    label: "ស្ទីគ័រ",
+    subLabel: "Sticker 🎨",
+    icon: "🎨",
+    bgGradient: ["#065f46", "#10b981"], // Emerald Green
     textColor: "#ffffff",
-    isDoll: true,
-    dollNumber: 2,
   },
   {
     id: 3,
-    label: "តុក្កតា",
-    subLabel: "Doll #3",
-    icon: "🧸",
-    bgGradient: ["#881337", "#e11d48"], // Crimson ruby
+    type: "candy",
+    label: "ស្ករគ្រាប់",
+    subLabel: "Candy 🍬",
+    icon: "🍬",
+    bgGradient: ["#9a3412", "#ea580c"], // Vibrant Orange Candy
     textColor: "#ffffff",
-    isDoll: true,
-    dollNumber: 3,
   },
   {
     id: 4,
-    label: "តុក្កតា",
-    subLabel: "Doll #4",
-    icon: "🧸",
-    bgGradient: ["#581c87", "#9333ea"], // Imperial purple
+    type: "like_page",
+    label: "Like Page",
+    subLabel: "Spin Again 👍",
+    icon: "👍",
+    bgGradient: ["#1e3a8a", "#2563eb"], // Royal Blue
     textColor: "#ffffff",
-    isDoll: true,
-    dollNumber: 4,
   },
 ];
 
@@ -116,8 +113,8 @@ export default function LuckyWheelModal({ isOpen, onClose }: LuckyWheelModalProp
     }
   }, [soundEnabled]);
 
-  // Fanfare sound on win
-  const playWinSound = useCallback((isDoll: boolean) => {
+  // Fanfare / sound on outcome
+  const playWinSound = useCallback((prizeType: PrizeType) => {
     if (!soundEnabled || typeof window === "undefined") return;
     try {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -125,11 +122,17 @@ export default function LuckyWheelModal({ isOpen, onClose }: LuckyWheelModalProp
         audioCtxRef.current = new AudioCtx();
       }
       const ctx = audioCtxRef.current;
-      const notes = isDoll ? [523.25, 659.25, 783.99, 1046.5] : [392, 440, 523.25];
+      const notes =
+        prizeType === "doll"
+          ? [523.25, 659.25, 783.99, 1046.5, 1318.5]
+          : prizeType === "thanks"
+          ? [392, 349.23, 329.63]
+          : [523.25, 659.25, 783.99];
+
       notes.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = "triangle";
+        osc.type = prizeType === "doll" ? "sawtooth" : "triangle";
         osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12);
         gain.gain.setValueAtTime(0.2, ctx.currentTime + idx * 0.12);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.35);
@@ -170,7 +173,11 @@ export default function LuckyWheelModal({ isOpen, onClose }: LuckyWheelModalProp
   }, [isOpen]);
 
   // Spin trigger function with exact mathematical odds:
-  // 99.9999% Thanks You, 0.0001% (or 0.000001% each) for the 4 dolls
+  // gift តុក្កតា 0.000001%
+  // Sticker 25%
+  // Candy 25%
+  // Like page and spin again 25%
+  // otherwise អរគុណ (24.999999%)
   const spinWheel = () => {
     if (isSpinning) return;
 
@@ -182,18 +189,25 @@ export default function LuckyWheelModal({ isOpen, onClose }: LuckyWheelModalProp
     // Sound activation
     playTickSound();
 
-    // 1. Determine Winning Segment:
-    // User requirement:
-    // "only 1 Thanks You and other 4 is តុក្កតា. Make spin with khmer design and also set the percent of thanks you is 99.9999 and 0.000001 for there 4 តុក្កតា"
+    // 1. Determine Winning Segment with requested odds:
     const roll = Math.random() * 100;
-    let selectedIndex = 0; // Segment 0 = Thanks You
+    let selectedIndex = 0;
 
-    // Thanks you is 99.9999%, so if roll is > 99.9999 it's a rare doll winner!
-    if (roll > 99.9999) {
-      // Pick one of the 4 doll segments [1, 2, 3, 4]
-      selectedIndex = Math.floor(Math.random() * 4) + 1;
+    const DOLL_CHANCE = 0.000001; // 0.000001%
+    const STICKER_CHANCE = 25.0;  // 25%
+    const CANDY_CHANCE = 25.0;    // 25%
+    const LIKE_PAGE_CHANCE = 25.0;// 25%
+
+    if (roll < DOLL_CHANCE) {
+      selectedIndex = 1; // តុក្កតា (Jackpot 0.000001%)
+    } else if (roll < DOLL_CHANCE + STICKER_CHANCE) {
+      selectedIndex = 2; // ស្ទីគ័រ (Sticker 25%)
+    } else if (roll < DOLL_CHANCE + STICKER_CHANCE + CANDY_CHANCE) {
+      selectedIndex = 3; // ស្ករគ្រាប់ (Candy 25%)
+    } else if (roll < DOLL_CHANCE + STICKER_CHANCE + CANDY_CHANCE + LIKE_PAGE_CHANCE) {
+      selectedIndex = 4; // Like page and spin again (25%)
     } else {
-      selectedIndex = 0;
+      selectedIndex = 0; // អរគុណ (otherwise 24.999999%)
     }
 
     const winningSegment = SEGMENTS[selectedIndex];
@@ -237,7 +251,7 @@ export default function LuckyWheelModal({ isOpen, onClose }: LuckyWheelModalProp
       setIsSpinning(false);
       setResultSegment(winningSegment);
       setShowResultModal(true);
-      playWinSound(winningSegment.isDoll);
+      playWinSound(winningSegment.type);
 
       // Send Spin Notification to Telegram Bot via Next.js Server API
       try {
@@ -246,11 +260,9 @@ export default function LuckyWheelModal({ isOpen, onClose }: LuckyWheelModalProp
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prize: winningSegment.isDoll
-              ? `តុក្កតា #${winningSegment.dollNumber}`
-              : "អរគុណ (Thanks You)",
-            isDoll: winningSegment.isDoll,
-            dollNumber: winningSegment.dollNumber,
+            prize: `${winningSegment.label} (${winningSegment.subLabel})`,
+            prizeType: winningSegment.type,
+            isDoll: winningSegment.type === "doll",
             clientTime: new Intl.DateTimeFormat("km-KH", {
               dateStyle: "full",
               timeStyle: "medium",
@@ -413,9 +425,8 @@ export default function LuckyWheelModal({ isOpen, onClose }: LuckyWheelModalProp
                       />
                       {/* Slice Content rotated along radius */}
                       <g
-                        transform={`translate(${textX}, ${textY}) rotate(${
-                          midAngle + 90
-                        })`}
+                        transform={`translate(${textX}, ${textY}) rotate(${midAngle + 90
+                          })`}
                       >
                         <text
                           textAnchor="middle"
@@ -516,23 +527,95 @@ export default function LuckyWheelModal({ isOpen, onClose }: LuckyWheelModalProp
           <div className="result-backdrop">
             <div className="result-card">
               <div className="result-badge-icon">
-                {resultSegment.isDoll ? "🧸🎉" : "🙏😂"}
+                {resultSegment.type === "doll" && "🧸🎉"}
+                {resultSegment.type === "sticker" && "🎨✨"}
+                {resultSegment.type === "candy" && "🍬🍭"}
+                {resultSegment.type === "like_page" && "👍🔄"}
+                {resultSegment.type === "thanks" && "🙏😂"}
               </div>
 
-              {resultSegment.isDoll ? (
+              {resultSegment.type === "doll" && (
                 <>
                   <h3 className="result-title winner-title">
-                    អបអរសាទរ! អ្នកបានឈ្នះរង្វាន់!
+                    អបអរសាទរ! អ្នកបានឈ្នះរង្វាន់ធំ!
                   </h3>
                   <p className="result-subtitle">
-                    🎉 អ្នកទទួលបាន <strong>តុក្កតា #{resultSegment.dollNumber}</strong> ដ៏ស្រស់ស្អាត!
+                    🎉 អ្នកទទួលបាន <strong>តុក្កតាមហាសំណាង (Lucky Doll)</strong>!
+                    <br />
+                    ឱកាសឈ្នះកម្របំផុត! 🧸✨
                   </p>
                   <div className="result-trophy-box">
                     <Trophy size={48} className="trophy-gold" />
                     <span>សំណាងពិតជាអស្ចារ្យណាស់!</span>
                   </div>
                 </>
-              ) : (
+              )}
+
+              {resultSegment.type === "sticker" && (
+                <>
+                  <h3 className="result-title winner-title">
+                    អបអរសាទរ! អ្នកបានឈ្នះស្ទីគ័រ!
+                  </h3>
+                  <p className="result-subtitle">
+                    🎨 អ្នកទទួលបាន <strong>Sticker ស្អាតៗ</strong> ជាកាដូអនុស្សាវរីយ៍!
+                  </p>
+                  <div className="result-sticker-box">
+                    <Image
+                      src="/haha-cry-sticker.jpg"
+                      alt="Sticker Prize"
+                      width={120}
+                      height={120}
+                      className="result-sticker"
+                    />
+                  </div>
+                </>
+              )}
+
+              {resultSegment.type === "candy" && (
+                <>
+                  <h3 className="result-title winner-title">
+                    អបអរសាទរ! អ្នកបានឈ្នះស្ករគ្រាប់!
+                  </h3>
+                  <p className="result-subtitle">
+                    🍬 អ្នកទទួលបាន <strong>ស្ករគ្រាប់ផ្អែមឆ្ងាញ់ (Sweet Candy)</strong>!
+                  </p>
+                  <div
+                    className="result-trophy-box"
+                    style={{
+                      background: "rgba(234, 88, 12, 0.15)",
+                      borderColor: "rgba(234, 88, 12, 0.4)",
+                      color: "#fdba74",
+                    }}
+                  >
+                    <span style={{ fontSize: "2.5rem" }}>🍬🍭</span>
+                    <span>រង្វាន់ស្ករគ្រាប់ផ្អែមឆ្ងាញ់សម្រាប់អ្នក!</span>
+                  </div>
+                </>
+              )}
+
+              {resultSegment.type === "like_page" && (
+                <>
+                  <h3 className="result-title winner-title" style={{ color: "#60a5fa" }}>
+                    Like Page & បង្វិលម្ដងទៀត!
+                  </h3>
+                  <p className="result-subtitle">
+                    👍 សូម Like ផេករបស់យើង រួចចុចប៊ូតុងខាងក្រោមដើម្បីបង្វិលកងសំណាងម្ដងទៀតភ្លាមៗ!
+                  </p>
+                  <div
+                    className="result-trophy-box"
+                    style={{
+                      background: "rgba(37, 99, 235, 0.15)",
+                      borderColor: "rgba(37, 99, 235, 0.4)",
+                      color: "#93c5fd",
+                    }}
+                  >
+                    <ThumbsUp size={36} />
+                    <span>ឱកាសសំណាងទីពីររបស់អ្នក!</span>
+                  </div>
+                </>
+              )}
+
+              {resultSegment.type === "thanks" && (
                 <>
                   <h3 className="result-title thanks-title">
                     អរគុណច្រើន! (Thanks You)

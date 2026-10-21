@@ -5,8 +5,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       prize = "អរគុណ (Thanks You)",
+      prizeType = "thanks",
       isDoll = false,
-      dollNumber = null,
       spinId = Math.random().toString(36).substring(2, 8).toUpperCase(),
       clientTime,
     } = body;
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const formattedTime =
       clientTime ||
       new Intl.DateTimeFormat("en-GB", {
-        timeZone: "Asia/Phnom Penh",
+        timeZone: "Asia/Phnom_Penh",
         dateStyle: "medium",
         timeStyle: "medium",
       }).format(now);
@@ -27,11 +27,26 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get("user-agent") || "Unknown Device";
     const isMobile = /mobile/i.test(userAgent) ? "📱 Mobile" : "💻 Desktop";
 
-    // Build the Telegram notification message
-    const emoji = isDoll ? "🎉🧸 MEGA WINNER! 🧸🎉" : "🎰 ព័ត៌មានលទ្ធផលបង្វិលកង";
-    const statusText = isDoll
-      ? `🔥 <b>អបអរសាទរ! ឈ្នះតុក្កតា #${dollNumber}!</b>`
-      : `😂 <b>លទ្ធផល:</b> អរគុណ (Thanks You)`;
+    // Build the Telegram notification message based on prizeType (no percentages shown)
+    let emoji = "🎰 ព័ត៌មានលទ្ធផលបង្វិលកង";
+    let statusText = `<b>លទ្ធផល:</b> ${prize}`;
+
+    if (prizeType === "doll" || isDoll) {
+      emoji = "🚨🎉🧸 MEGA JACKPOT WINNER! 🧸🎉🚨";
+      statusText = `🔥 <b>អបអរសាទរ! ឈ្នះតុក្កតាមហាសំណាង (JACKPOT)!</b>`;
+    } else if (prizeType === "sticker") {
+      emoji = "✨🎨 STICKER WINNER! 🎨✨";
+      statusText = `🎁 <b>អបអរសាទរ! ឈ្នះស្ទីគ័រដ៏ស្រស់ស្អាត (Sticker)!</b>`;
+    } else if (prizeType === "candy") {
+      emoji = "🍬🍭 SWEET CANDY WINNER! 🍭🍬";
+      statusText = `🍭 <b>អបអរសាទរ! ឈ្នះស្ករគ្រាប់ផ្អែមឆ្ងាញ់ (Candy)!</b>`;
+    } else if (prizeType === "like_page") {
+      emoji = "👍🔄 LIKE PAGE & SPIN AGAIN! 🔄👍";
+      statusText = `👍 <b>បាន Like Page និងបង្វិលម្ដងទៀត!</b>`;
+    } else {
+      emoji = "🙏😂 THANKS YOU 😂🙏";
+      statusText = `😂 <b>លទ្ធផល:</b> អរគុណ (Thanks You)`;
+    }
 
     const message = `
 ${emoji}

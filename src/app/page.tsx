@@ -1,42 +1,44 @@
 "use client";
 
-import { useState, useRef } from "react";
-import Image from "next/image";
+import { useState } from "react";
+// import { useRef } from "react";
+// import Image from "next/image";
 import LuckyWheelModal from "@/components/LuckyWheelModal";
 
 export default function Home() {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  // const audioRef = useRef<HTMLAudioElement | null>(null);
+  // const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  const [isPlayingSong, setIsPlayingSong] = useState(false);
-  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
-  const [isSpinModalOpen, setIsSpinModalOpen] = useState(false);
+  // const [isPlayingSong, setIsPlayingSong] = useState(false);
+  // const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [isSpinModalOpen, setIsSpinModalOpen] = useState(true);
 
-  const toggleSong = () => {
-    if (!audioRef.current) return;
-    if (isPlayingSong) {
-      audioRef.current.pause();
-      setIsPlayingSong(false);
-    } else {
-      audioRef.current.play();
-      setIsPlayingSong(true);
-    }
-  };
+  // const toggleSong = () => {
+  //   if (!audioRef.current) return;
+  //   if (isPlayingSong) {
+  //     audioRef.current.pause();
+  //     setIsPlayingSong(false);
+  //   } else {
+  //     audioRef.current.play();
+  //     setIsPlayingSong(true);
+  //   }
+  // };
 
-  const toggleVideo = () => {
-    if (!videoRef.current) return;
-    if (isPlayingVideo) {
-      videoRef.current.pause();
-      setIsPlayingVideo(false);
-    } else {
-      videoRef.current.play();
-      setIsPlayingVideo(true);
-    }
-  };
+  // const toggleVideo = () => {
+  //   if (!videoRef.current) return;
+  //   if (isPlayingVideo) {
+  //     videoRef.current.pause();
+  //     setIsPlayingVideo(false);
+  //   } else {
+  //     videoRef.current.play();
+  //     setIsPlayingVideo(true);
+  //   }
+  // };
 
   return (
     <div className="container">
-      {/* 1. HERO SECTION */}
+      {/* 1. HERO SECTION (Commented out) */}
+      {/*
       <section className="hero-section">
         <div className="profile-img-box">
           <Image
@@ -51,10 +53,11 @@ export default function Home() {
         </div>
         <h1 className="hero-title">Hello I&apos;m Seyha</h1>
       </section>
+      */}
 
-      {/* 2. MEDIA SECTION */}
+      {/* 2. MEDIA SECTION (Commented out) */}
+      {/*
       <section className="media-section">
-        {/* Today's Song */}
         <div className="media-item">
           <audio
             ref={audioRef}
@@ -74,7 +77,6 @@ export default function Home() {
           </span>
         </div>
 
-        {/* Video Player */}
         <div className="media-item">
           <video
             ref={videoRef}
@@ -95,8 +97,10 @@ export default function Home() {
           </button>
         </div>
       </section>
+      */}
 
-      {/* 3. LAST SECTION */}
+      {/* 3. LAST SECTION (Commented out) */}
+      {/*
       <section className="last-section">
         <h2 className="khmer-title">អរគុណ</h2>
         <div className="sticker-box">
@@ -109,6 +113,7 @@ export default function Home() {
           />
         </div>
       </section>
+      */}
 
       {/* 4. LUCKY SPIN WHEEL SECTION */}
       <section className="spin-section">
@@ -116,7 +121,7 @@ export default function Home() {
           <div className="spin-sparkle-badge">✨ សំណាងមហាសាល ✨</div>
           <h3 className="spin-banner-title">កងបង្វិលយករង្វាន់</h3>
           <p className="spin-banner-desc">
-            សាកល្បងសំណាងរបស់អ្នកឥឡូវនេះ ដើម្បីឈ្នះតុក្កតាដ៏ស្រស់ស្អាត! 🧸
+            សាកល្បងសំណាងរបស់អ្នកឥឡូវនេះ ដើម្បីឈ្នះតុក្កតា, ស្ទីគ័រ, ស្ករគ្រាប់ និងរង្វាន់ជាច្រើនទៀត! 🎁
           </p>
           <button
             type="button"
